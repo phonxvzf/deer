@@ -1,0 +1,4 @@
+proj_model
+*.ipynb
+tmp.jpg
+.ipynb_checkpoints/
