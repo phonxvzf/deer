@@ -55,7 +55,8 @@ bool detect_threshold(
     const cv::Mat& camera_matrix,
     const std::vector<double>& dist_coef,
     std::vector<double>& out_rvec,
-    std::vector<double>& out_tvec
+    std::vector<double>& out_tvec,
+    std::vector<cv::Point2f>& dbg_corners
     )
 {
   cv::Mat frame_hsv;
@@ -64,8 +65,8 @@ bool detect_threshold(
   cv::Mat thresh;
   cv::inRange(
       frame_hsv,
-      cv::Scalar(min_hue * 180 / 360,  30 * 255 / 100, 30 * 255 / 100),
-      cv::Scalar(max_hue * 180 / 360, 80 * 255 / 100, 80 * 255 / 100),
+      cv::Scalar(min_hue * 180 / 360,  0 * 255 / 100, 0 * 255 / 100),
+      cv::Scalar(max_hue * 180 / 360, 100 * 255 / 100, 100 * 255 / 100),
       thresh
       );
 
@@ -87,14 +88,17 @@ bool detect_threshold(
     }
   }
 
+  std::vector<cv::Point2i> hull;
+  cv::convexHull(contours[largest_contour_id], hull);
+
   std::vector<cv::Point2i> approx_curve;
-  cv::approxPolyDP(contours[largest_contour_id], approx_curve, epsilon, true);
+  cv::approxPolyDP(hull, approx_curve, epsilon, true);
 
   ++bench_count;
   std::cerr << "hit chance: " << (float) bench_4_count / bench_count << '\r';
   if (approx_curve.size() < 4) return false;
 
-  ++bench_4_count;
+  bench_4_count += (approx_curve.size() == 4);
 
   cv::Point2i centroid(0, 0);
   for (const cv::Point2i& point : approx_curve) {
@@ -124,6 +128,8 @@ bool detect_threshold(
   // Solve PnP
   cv::Mat world_points(4, 3, CV_64FC1, (double*) PLANE_MATRIX_VALUES);
   cv::solvePnP(world_points, sorted_points, camera_matrix, dist_coef, out_rvec, out_tvec);
+
+  dbg_corners = std::vector<cv::Point2f>(sorted_points);
   
   return true;
 }

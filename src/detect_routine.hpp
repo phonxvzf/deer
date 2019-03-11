@@ -18,7 +18,8 @@ bool detect_threshold(
     const cv::Mat& camera_matrix,
     const std::vector<double>& dist_coef,
     std::vector<double>& out_rvec,
-    std::vector<double>& out_tvec
+    std::vector<double>& out_tvec,
+    std::vector<cv::Point2f>& dbg_corners
     );
 
 #endif /* _DETECT_ROUTINE_HPP */

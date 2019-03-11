@@ -279,16 +279,17 @@ int main() {
   cv::Mat frame;
   cv::Mat rvec_mat;
   float tvec_pod[3];
-  int min_hue = 130, max_hue = 160, epsilon = 40;
+  int min_hue = 70, max_hue = 100, epsilon = 40;
   cv::setOpenGlDrawCallback(MONITOR_TITLE, draw_gl, &params);
   cv::createTrackbar("Min hue", MONITOR_TITLE, &min_hue, 360);
   cv::createTrackbar("Max hue", MONITOR_TITLE, &max_hue, 360);
   cv::createTrackbar("Epsilon", MONITOR_TITLE, &epsilon, 100);
+  std::vector<cv::Point2f> dbg_corners;
   while (cap.isOpened()) {
     cap >> frame;
     params.frame = &frame;
     //if (detect_marker(frame, camera_matrix, DIST_COEF, rvec, tvec)) {
-    if (detect_threshold(frame, min_hue, max_hue, epsilon, camera_matrix, DIST_COEF, rvec, tvec)) {
+    if (detect_threshold(frame, min_hue, max_hue, epsilon, camera_matrix, DIST_COEF, rvec, tvec, dbg_corners)) {
       // draw_scene(frame, world_points, camera_matrix, DIST_COEF, rvec, tvec);
       // draw_debug(frame, deer_positions, camera_matrix, DIST_COEF, rvec, tvec);
       cv::Rodrigues(rvec, rvec_mat); // convert rotation vector to rotation matrix
@@ -298,6 +299,17 @@ int main() {
       params.extrinsic_rot = &rvec_mat;
       params.extrinsic_trans = tvec_pod;
       params.ready = true;
+      for (size_t i = 0; i < dbg_corners.size(); ++i) {
+        cv::putText(
+            frame,
+            std::to_string(i),
+            dbg_corners[i],
+            cv::FONT_HERSHEY_PLAIN,
+            3,
+            cv::Scalar(0, 0, 255),
+            3
+            );
+      }
     } else {
       params.ready = false;
     }
